@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<PropertyList>
+
+    <!-- Add this if you want to persist ACARS and CPDLC setup between sessions -->
+    <sim>
+        <aircraft-data>
+            <path>/cpdlc/driver</path>
+            <path>/acars/config</path>
+        </aircraft-data>
+    </sim>
+
+    <!-- Add this -->
+    <acars>
+        <pdc-dialog>
+            <facility type="string"></facility>
+            <flight-id type="string"></flight-id>
+            <atis type="string"></atis>
+            <departure-airport type="string"></departure-airport>
+            <destination-airport type="string"></destination-airport>
+            <gate type="string"></gate>
+            <aircraft-type type="string"></aircraft-type>
+            <valid type="bool">false</valid>
+        </pdc-dialog>
+        <telex-dialog>
+            <to type="string"></to>
+            <text type="string"></text>
+        </telex-dialog>
+        <config>
+            <weather-backend type="string">AUTO</weather-backend>
+            <atis-backend type="string">AUTO</atis-backend>
+        </config>
+    </acars>
+
+    <cpdlc>
+        <driver type="string"></driver>
+    </cpdlc>
+
+    <!-- Load Nasal like this -->
+    <nasal>
+        <json>
+            <file>Aircraft/E-jet-family/Nasal/json.nas</file>
+        </json>
+        <cpdlc>
+            <file>Aircraft/E-jet-family/Nasal/cpdlc/main.nas</file>
+        </cpdlc>
+        <acars>
+            <file>Aircraft/E-jet-family/Nasal/acars/main.nas</file>
+        </acars>
+    </nasal>
+</PropertyList>
