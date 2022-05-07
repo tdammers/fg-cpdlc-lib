@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-
 <PropertyList>
-
     <!-- Add this if you want to persist ACARS and CPDLC setup between sessions -->
     <sim>
         <aircraft-data>
@@ -9,7 +7,20 @@
             <path>/acars/config</path>
         </aircraft-data>
     </sim>
-
+    
+    <!-- Load Nasal like this -->
+    <nasal>
+        <json>
+            <file>Aircraft/E-jet-family/Nasal/json.nas</file>
+        </json>
+        <cpdlc>
+            <file>Aircraft/E-jet-family/Nasal/cpdlc/main.nas</file>
+        </cpdlc>
+        <acars>
+            <file>Aircraft/E-jet-family/Nasal/acars/main.nas</file>
+        </acars>
+    </nasal>
+    
     <!-- Add this -->
     <acars>
         <pdc-dialog>
@@ -26,26 +37,22 @@
             <to type="string"></to>
             <text type="string"></text>
         </telex-dialog>
+        <!-- The effective dispatch callsign -->
+        <dispatch-callsign type="string"></dispatch-callsign>
+        <ads-c>
+            <timer type="int">0</timer>
+            <periodics/>
+        </ads-c>
         <config>
             <weather-backend type="string">AUTO</weather-backend>
             <atis-backend type="string">AUTO</atis-backend>
+            <progress-backend type="string">AUTO</progress-backend>
+            <!-- dispatch callsign override; infer from own callsign if empty -->
+            <dispatch-callsign type="string"></dispatch-callsign>
         </config>
     </acars>
-
+    
     <cpdlc>
         <driver type="string"></driver>
     </cpdlc>
-
-    <!-- Load Nasal like this -->
-    <nasal>
-        <json>
-            <file>Aircraft/E-jet-family/Nasal/json.nas</file>
-        </json>
-        <cpdlc>
-            <file>Aircraft/E-jet-family/Nasal/cpdlc/main.nas</file>
-        </cpdlc>
-        <acars>
-            <file>Aircraft/E-jet-family/Nasal/acars/main.nas</file>
-        </acars>
-    </nasal>
 </PropertyList>
