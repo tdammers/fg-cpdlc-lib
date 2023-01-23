@@ -226,8 +226,8 @@ var uplink_messages = {
     "ADVU-18": { txt: "RELAY TO $1", args: [ARG_CALLSIGN], r_opts: ["w","u"] },
     "ADVU-19": { txt: "$1 DEVIATION DETECTED. VERIFY AND ADVISE", args: [ARG_DEVIATION_TYPE], r_opts: ["w","u"] }, 
 
-    "COMU-1":  { txt: "CONTACT $1 $2", args: [ARG_CALLSIGN, ARG_FREQ], r_opts: ["w","u"] },
-    "COMU-2":  { txt: "AT $1 CONTACT $2 $3", args: [ARG_NAVPOS, ARG_CALLSIGN, ARG_FREQ], r_opts: ["w","u"] },
+    "COMU-1":  { txt: "CONTACT $1 $2 $3", args: [ARG_CALLSIGN | ARG_OPTIONAL, ARG_FREQ, ARG_CALLSIGN | ARG_OPTIONAL], r_opts: ["w","u"] },
+    "COMU-2":  { txt: "AT $1 CONTACT $2 $3 $4", args: [ARG_NAVPOS, ARG_CALLSIGN | ARG_OPTIONAL, ARG_FREQ, ARG_CALLSIGN | ARG_OPTIONAL], r_opts: ["w","u"] },
     "COMU-3":  { txt: "AT TIME $1 CONTACT $2 $3", args: [ARG_TIME, ARG_CALLSIGN, ARG_FREQ], r_opts: ["w","u"] },
     "COMU-4":  { txt: "SECONDARY FREQUENCY $1", args: [ARG_FREQ], r_opts: ["r"] },
     "COMU-5":  { txt: "MONITOR $1 $2", args: [ARG_CALLSIGN, ARG_FREQ], r_opts: ["w","u"] },

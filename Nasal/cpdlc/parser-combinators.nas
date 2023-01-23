@@ -1,81 +1,108 @@
-var rOK = func (val) {
-    return {
-        failed: 0,
-        ok: 1,
-        val: val,
-    };
-};
+## Parser Combinators for Nasal.
 
-var rFail = func (msg) {
-    return {
-        failed: 1,
-        ok: 0,
-        error: msg,
-    };
-};
+########## Parser results. ##########
 
-var rBind = func (r, f) {
-    if (r.failed)
-        return r;
-    else
-        return f(r.val);
-};
+var Result = {
+    new: func(failed, valOrMsg) {
+        var r = { parents: [Result] };
+        r.className = 'Result';
+        r.failed = failed;
+        r.ok = !failed;
 
-var rFailToDie = func (r) {
-    if (r.failed)
-        die(r.error);
-    else
-        return r.val;
-};
+        if (failed) {
+            r.error = valOrMsg;
+        }
+        else {
+            r.val = valOrMsg;
+        }
+        r;
+    },
 
-var rMap = func (f, r) {
-    if (r.ok)
-        return rOK(f(r.val));
-    else
-        return r;
-};
-
-var pBind = func (p, f) {
-    return func (s) {
-        var r = p(s);
-        if (r.failed)
-            return r;
+    # Functor
+    pure: func (val) { Result.new(0, val); },
+    map: func (f) {
+        if (me.ok)
+            me.pure(f(me.val));
         else
-            return f(r.val)(s);
-    };
+            me
+    },
+
+    # Monad
+    bind: func (next) {
+        if (me.ok)
+            next(me.val);
+        else
+            me
+    },
+
+    # Fail
+    fail: func (msg) { Result.new(1, msg); },
+
+    failToDie: func {
+        if (me.failed)
+            die(me.error)
+        else
+            me.val
+    },
 };
 
-var pOK = func (val) {
-    return func (s) {
-        return rOK(val);
-    };
-};
+########## Parser type. ##########
 
-var pFail = func (msg) {
-    return func (s) {
-        return rFail(msg);
-    };
-};
+var Parser = {
+    new: func(run) {
+        return {
+            parents: [Parser],
+            className: 'Parser',
+            run: run,
+        };
+    },
 
-var pMap = func (f, p) {
-    return func (s) {
-        rMap(f, p(s));
-    };
-};
+    # Functor
+    pure: func (val) {
+        Parser.new(func (s) {
+            Result.pure(val);
+        });
+    },
+    map: func (f) {
+        var p = me;
+        Parser.new(func (s) {
+            p.run(s).map(f);
+        });
+    },
 
-var runP = func (s, p) {
-    return rFailToDie(p(s));
+
+    # Monad
+    bind: func (f) {
+        var p = me;
+        Parser.new(func (s) {
+            var r = p.run(s);
+            if (r.failed)
+                r;
+            else
+                f(r.val).run(s);
+        });
+    },
+
+    # Fail
+    fail: func (msg) {
+        Parser.new(func (s) {
+            Result.fail(msg);
+        });
+    },
+
+    runOrDie: func (s) {
+        me.run(s).failToDie();
+    },
 };
 
 var TokenStream = {
     new: func (tokens) {
-        var m = {
+        return {
             parents: [TokenStream],
             tokens: tokens,
             numTokens: size(tokens),
             readpos: 0,
         };
-        return m;
     },
 
     eof: func {
@@ -84,99 +111,99 @@ var TokenStream = {
 
     peek: func (n=0) {
         if (me.readpos + n >= me.numTokens)
-            return rFail('Unexpected end of input');
+            Result.fail('Unexpected end of input');
         else
-            return rOK(me.tokens[me.readpos + n]);
+            Result.pure(me.tokens[me.readpos + n]);
     },
 
     consume: func {
         if (me.eof())
-            return rFail('Unexpected end of input');
+            return Result.fail('Unexpected end of input');
         me.readpos += 1;
-        return rOK(me.tokens[me.readpos - 1]);
+        Result.pure(me.tokens[me.readpos - 1]);
     },
 
     consumeAll: func {
         var result = subvec(me.tokens, me.readpos);
         me.readpos = me.numTokens;
-        return rOK(result);
+        Result.pure(result);
     },
 
     unconsumed: func {
-        return subvec(me.tokens, me.readpos);
+        subvec(me.tokens, me.readpos);
     },
 
 };
 
-anyToken = func (s) {
-    return s.consume();
-};
+anyToken = Parser.new(func (s) {
+    s.consume();
+});
 
-peekToken = func (s) {
-    return s.peek();
-};
+peekToken = Parser.new(func (s) {
+    s.peek();
+});
 
-var eof = func (s) {
+var eof = Parser.new(func (s) {
     if (s.eof())
-        return rOK(nil);
+        Result.pure(nil);
     else
-        return rFail('Expected EOF');
-};
+        Result.fail('Expected EOF');
+});
+
 
 var satisfy = func (cond, expected=nil) {
     return
-        pBind(peekToken, func (token) {
-            if (cond(token)) {
-                return anyToken;
-            }
+        peekToken.bind(func (token) {
+            if (cond(token))
+                anyToken;
             elsif (expected == nil)
-                return pFail(sprintf('Unexpected %s', token));
+                Parser.fail(sprintf('Unexpected %s', token));
             else
-                return pFail(sprintf('Unexpected %s, expected %s', token, expected));
+                Parser.fail(sprintf('Unexpected %s, expected %s', token, expected));
         });
 };
 
 var oneOf = func (items) {
-    return satisfy(func (token) { return contains(items, token); });
+    satisfy(func (token) { return contains(items, token); });
 };
 
 var exactly = func (item) {
-    return satisfy(func (token) { return token == item; }, item);
+    satisfy(func (token) { return token == item; }, item);
 };
 
 var tryParse = func (p, catch=nil) {
-    return func (s) {
+    Parser.new(func (s) {
         var readposBuf = s.readpos;
-        var result = p(s);
+        var result = p.run(s);
         if (result.failed) {
             # parse failed: roll back
             s.readpos = readposBuf;
             if (catch == nil)
-                return result;
+                result;
             else
-                return catch(s);
+                catch.run(s);
         }
         else {
-            return result;
+            result;
         }
     }
-};
+)};
 
 var optionally = func (p, def=nil) {
-    return tryParse(p, pOK(def));
+    tryParse(p, Parser.pure(def));
 };
 
 
 var manyTill = func (p, stop) {
-    return func (s) {
+    Parser.new(func (s) {
         var result = [];
         var val = nil;
         while (1) {
-            var r = tryParse(stop)(s);
+            var r = tryParse(stop).run(s);
             if (r.ok) {
-                return rOK(result);
+                return Result.pure(result);
             }
-            var inner = p(s);
+            var inner = p.run(s);
             if (inner.failed) {
                 return inner;
             }
@@ -184,32 +211,41 @@ var manyTill = func (p, stop) {
                 append(result, inner.val);
             }
         }
-        return rFail('This point cannot be reached');
-    }
+        Result.fail('This point cannot be reached');
+    });
 };
 
 var many = func (p) {
-    return func (s) {
+    Parser.new(func (s) {
         var result = [];
         var val = nil;
         while (!s.eof()) {
-            var inner = tryParse(p)(s);
+            var inner = tryParse(p).run(s);
             if (inner.failed)
-                return rOK(result);
+                return Result.pure(result);
             else
                 append(result, inner.val);
         }
-        return rOK(result);
-    }
+        Result.pure(result);
+    });
+};
+
+var some = func (p) {
+    many(p).bind(func (result) {
+        if (size(result))
+            Parser.pure(result);
+        else
+            Parser.fail("Expected at least one element");
+    });
 };
 
 var choice = func (ps, expected=nil) {
-    return func (s) {
+    Parser.new(func (s) {
         foreach (var p; ps) {
-            var r = tryParse(p)(s);
+            var r = tryParse(p).run(s);
             if (r.ok)
                 return r;
         }
-        return pFail('Choice failed');
-    }
+        Result.fail('Choice failed');
+    });
 };
