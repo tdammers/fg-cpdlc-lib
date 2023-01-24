@@ -472,7 +472,7 @@ var parseCPDLC = func (str) {
     }
 };
 
-var testMessages = [
+var smokeTestMessages = [
     "AIR TRAFFIC SERVICE TERMINATED MONITOR UNICOM 122.800",
     "AT @1257@ DESCEND TO AND MAINTAIN @FL290",
     "ATC REQUEST STATUS . . FSM 1104 230123 EFHK @FIN7RA@ CDA RECEIVED @CLEARANCE CONFIRMED",
@@ -546,7 +546,6 @@ var testMessages = [
     "CONTACT ME BY RADIO I HAVE BEEN TRYING TO CALL YOU",
     "CONTACT @REIMS CONTROL@ @128.300@",
     "CONTLR CHANGE RESEND REQ OR REVERT TO VOICE",
-    "C PERFORMANCE",
     "CURRENT ATC UNIT@_@ADRA@_@ADRIA",
     "CURRENT ATC UNIT@_@ADRW@_@ADRIA",
     "CURRENT ATC UNIT@_@BIRD@_@REYKJAVIK OCA",
@@ -684,22 +683,74 @@ var testMessages = [
     "YOU ARE LEAVING MY AIRSPACE NO FURTHER ATC MONITOR UNICOM 122.800 BYE BYE",
 ];
 
-var runTests = func {
+var testCases = [
+    [ "down", "REQUEST LOGON", [{type: 'HPPD-1', args: []}] ],
+    [ "up", "LOGON ACCEPTED", [{type: 'HPPU-1', args: []}] ],
+    [ "up", "PROCEED DIRECT TO SUGOL DESCEND TO FL70", [{type: 'RTEU-2', args: ['SUGOL']}, {type: 'LVLU-9', args: ['FL70']}] ],
+    [ "up", "CLIMB TO REACH FL70 BEFORE TIME 2230", [{type: 'LVLU-12', args: ['FL70', '2230']}] ],
+    [ "up", "CLIMB TO FL70 PROCEED DIRECT TO PAM", [{type: 'LVLU-6', args: ['FL70']}, {type: 'RTEU-2', args: ['PAM']}] ],
+];
+
+var runParserTests = func {
     var failed = 0;
     var succeeded = 0;
     var total = 0;
-    foreach (var msg; testMessages) {
+    var formatResult = func(results) {
+        var strs = [];
+        foreach (var result; results) {
+            append(
+                strs,
+                sprintf('%s (%s)',
+                    result.type, string.join(', ', result.args)));
+        }
+        return '[' ~ string.join('; ', strs) ~ ']';
+    };
+    foreach (var testCase; testCases) {
+        var dir = testCase[0];
+        var txt = testCase[1];
+        var expected = testCase[2];
+        var actual = matchMessages(txt, dir, '');
+        var expectedStr = formatResult(expected);
+        var actualStr = formatResult(actual);
+        total += 1;
+        if (actualStr == expectedStr) {
+            succeeded += 1;
+        }
+        else {
+            printf("FAIL: %s. Expected %s, but got %s",
+                txt,
+                expectedStr,
+                actualStr);
+            failed += 1;
+        }
+    }
+    if (failed > 0) {
+        printf("Parser tests: %i/%i FAILED", failed, total);
+    }
+    else {
+        printf("Parser tests: %i/%i succeeded", succeeded, total);
+    }
+};
+
+var runSmokeTests = func {
+    var failed = 0;
+    var succeeded = 0;
+    var total = 0;
+    foreach (var msg; smokeTestMessages) {
         var results = matchMessages(msg, 'any', '');
         total += 1;
         if (results == nil) {
-            printf("--- FAIL: %s ---", msg);
+            printf("FAIL: %s", msg);
             failed += 1;
         }
         else {
             succeeded += 1;
         }
     }
-    printf("%i/%i succeeded", succeeded, total);
-    if (failed > 0)
-        printf("%i failed", failed);
+    if (failed > 0) {
+        printf("Smoke tests: %i/%i FAILED", failed, total);
+    }
+    else {
+        printf("Smoke tests: %i/%i succeeded", succeeded, total);
+    }
 };
