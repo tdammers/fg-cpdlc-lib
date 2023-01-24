@@ -6,7 +6,7 @@ io.load_nasal(path, 'cpdlc');
 # message log, but we never send or receive these.
 var hoppie_uplink_messages = {
     "HPPU-1": { txt: "LOGON ACCEPTED", args: [] },
-    "HPPU-2": { txt: "HANDOVER $1", args: [ARG_FACILITY] },
+    "HPPU-2": { txt: "HANDOVER $1", args: [ARG_DATA_AUTHORITY] },
     "HPPU-3": { txt: "LOGOFF", args: [] },
 };
 
@@ -99,6 +99,10 @@ argParsers[ARG_PROCEDURE] = func (delimiter=nil) {
 };
 
 argParsers[ARG_FACILITY] = func (delimiter=nil) {
+    satisfy(isIdentifier);
+};
+
+argParsers[ARG_DATA_AUTHORITY] = func (delimiter=nil) {
     satisfy(isIdentifier);
 };
 
@@ -391,18 +395,15 @@ var HoppieDriver = {
         if (msg.parts[0].type == 'HPPU-1') {
             # LOGON ACCEPTED
             me.system.setLogonAccepted(raw.from);
+            me.system.setCurrentStation(raw.from);
         }
         elsif (msg.parts[0].type == 'HPPU-3') {
             # LOGOFF
             me.system.setCurrentStation('');
         }
-        elsif (msg.parts[0].type == 'HPPU-2') {
+        elsif (msg.parts[0].type == 'HPPU-2' or msg.parts[0].type == 'SYSU-2') {
             me.system.setNextStation(vars[0]);
             me.system.connect(vars[0]);
-        }
-        elsif (msg.parts[0].type == 'COMU-9') {
-            # CURRENT ATC UNIT
-            me.system.setCurrentStation(vars[0]);
         }
         else {
             me.system.receive(msg);

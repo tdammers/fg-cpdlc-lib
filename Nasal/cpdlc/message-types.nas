@@ -234,7 +234,7 @@ var uplink_messages = {
     "COMU-6":  { txt: "AT $1 MONITOR $2 $3", args: [ARG_NAVPOS, ARG_CALLSIGN, ARG_FREQ], r_opts: ["w","u"] },
     "COMU-7":  { txt: "AT TIME $1 MONITOR $2 $3", args: [ARG_TIME, ARG_CALLSIGN, ARG_FREQ], r_opts: ["w","u"] },
     "COMU-8":  { txt: "CHECK STUCK MICROPHONE $1", args: [ARG_FREQ], r_opts: [] },
-    "COMU-9":  { txt: "CURRENT ATC UNIT $1 $2", args: [ARG_FACILITY, ARG_CALLSIGN | ARG_OPTIONAL], r_opts: [] },
+    "COMU-9":  { txt: "CURRENT ATC UNIT $1", args: [ARG_TEXT], r_opts: [] },
 
     "EMGU-1": { txt: "REPORT ENDURANCE AND PERSONS ON BOARD", args: [], r_opts: ["y"], replies: [{type:"EMGD-3"}] }, 
     "EMGU-2": { txt: "IMMEDIATELY", args: [], r_opts: ["y"] },
