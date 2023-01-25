@@ -1,6 +1,4 @@
-var acdir = getprop('/sim/aircraft-dir');
-var path = acdir ~ '/Nasal/cpdlc/parser-combinators.nas';
-io.load_nasal(path, 'cpdlc');
+io.include('parser-combinators.nas');
 
 # These are not in ICAO Doc 4444; we use these to inject system events into the
 # message log, but we never send or receive these.
