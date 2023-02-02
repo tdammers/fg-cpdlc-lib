@@ -336,6 +336,7 @@ var HoppieDriver = {
         var min = me.system.genMIN();
         var packed = me._pack(min, '', 'N', 'LOGOFF');
         me._send(me.system.getCurrentStation(), packed);
+        me.system.setCurrentStation('');
     },
 
     send: func (msg) {
